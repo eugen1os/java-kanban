@@ -1,12 +1,15 @@
+import manager.Managers;
+import manager.TaskManager;
+import model.*;
+
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         System.out.println("Поехали!");
-        TaskManager manager = new TaskManager();
+        TaskManager manager = Managers.getDefault();
         Scanner scanner = new Scanner(System.in);
 
-        /* ===== БЛОК МЕНЮ (для тестирования) =====
         boolean isRunning = true;
         while (isRunning) {
             printMainMenu();
@@ -18,12 +21,39 @@ public class Main {
                 case 2 -> menuEpics(manager, scanner);
                 case 3 -> menuSubtasks(manager, scanner);
                 case 4 -> printAllData(manager);
+                case 5 -> printHistory(manager);
                 case 0 -> isRunning = false;
                 default -> System.out.println("Ошибка: неверная команда!");
             }
         }
-         ===== КОНЕЦ БЛОКА МЕНЮ ===== */
-        /* Может сделать сердечник катушки деревянным? */
+    }
+
+    private static void printStatusMenu() {
+        System.out.println("Выберите статус:");
+        System.out.println("1. NEW");
+        System.out.println("2. IN_PROGRESS");
+        System.out.println("3. DONE");
+    }
+
+    private static Status selectStatus(Scanner scanner) {
+        printStatusMenu();
+        int statusChoice = readInt(scanner, "Введите номер статуса: ");
+        return switch (statusChoice) {
+            case 1 -> Status.NEW;
+            case 2 -> Status.IN_PROGRESS;
+            case 3 -> Status.DONE;
+            default -> {
+                System.out.println("Неверный выбор, установлен статус NEW");
+                yield Status.NEW;
+            }
+        };
+    }
+
+    private static void printHistory(TaskManager manager) {
+        System.out.println("\n=== История просмотров ===");
+        for (Task task : manager.getHistory()) {
+            System.out.println(task);
+        }
     }
 
     private static void printMainMenu() {
@@ -32,6 +62,7 @@ public class Main {
         System.out.println("2. Управление эпиками");
         System.out.println("3. Управление подзадачами");
         System.out.println("4. Показать все данные");
+        System.out.println("5. История просмотров");
         System.out.println("0. Выход");
     }
 
@@ -64,15 +95,16 @@ public class Main {
             }
             case 3 -> {
                 System.out.println("Все задачи:");
-                manager.getAllTasks().forEach(System.out::println);
+                for (Task task : manager.getAllTasks()) {
+                    System.out.println(task);
+                }
             }
             case 4 -> {
                 System.out.print("Введите ID задачи: ");
                 int id = scanner.nextInt();
                 scanner.nextLine();
-                System.out.print("Новый статус (NEW/IN_PROGRESS/DONE): ");
-                Status status = Status.valueOf(scanner.nextLine().toUpperCase());
 
+                Status status = selectStatus(scanner);
                 Task task = manager.getTaskById(id);
                 if (task != null) {
                     task.setStatus(status);
@@ -114,13 +146,17 @@ public class Main {
             }
             case 3 -> {
                 System.out.println("Все эпики:");
-                manager.getAllEpics().forEach(System.out::println);
+                for (Epic epic : manager.getAllEpics()) {
+                    System.out.println(epic);
+                }
             }
             case 4 -> {
                 System.out.print("Введите ID эпика: ");
                 int epicId = scanner.nextInt();
                 System.out.println("Подзадачи эпика " + epicId + ":");
-                manager.getSubtasksByEpicId(epicId).forEach(System.out::println);
+                for (Subtask subtask : manager.getSubtasksByEpicId(epicId)) {
+                    System.out.println(subtask);
+                }
             }
         }
     }
@@ -157,15 +193,16 @@ public class Main {
             }
             case 3 -> {
                 System.out.println("Все подзадачи:");
-                manager.getAllSubtasks().forEach(System.out::println);
+                for (Subtask subtask : manager.getAllSubtasks()) {
+                    System.out.println(subtask);
+                }
             }
             case 4 -> {
                 System.out.print("Введите ID подзадачи: ");
                 int id = scanner.nextInt();
                 scanner.nextLine();
-                System.out.print("Новый статус (NEW/IN_PROGRESS/DONE): ");
-                Status status = Status.valueOf(scanner.nextLine().toUpperCase());
 
+                Status status = selectStatus(scanner);
                 Subtask subtask = manager.getSubtaskById(id);
                 if (subtask != null) {
                     subtask.setStatus(status);
@@ -181,13 +218,19 @@ public class Main {
     private static void printAllData(TaskManager manager) {
         System.out.println("\n=== Все данные ===");
         System.out.println("Задачи:");
-        manager.getAllTasks().forEach(System.out::println);
+        for (Task task : manager.getAllTasks()) {
+            System.out.println(task);
+        }
 
         System.out.println("\nЭпики:");
-        manager.getAllEpics().forEach(System.out::println);
+        for (Epic epic : manager.getAllEpics()) {
+            System.out.println(epic);
+        }
 
         System.out.println("\nПодзадачи:");
-        manager.getAllSubtasks().forEach(System.out::println);
+        for (Subtask subtask : manager.getAllSubtasks()) {
+            System.out.println(subtask);
+        }
     }
 
     private static int readInt(Scanner scanner, String prompt) {

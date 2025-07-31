@@ -4,19 +4,34 @@ import model.Task;
 import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private final List<Task> history = new LinkedList<>();
+    private final Map<Integer, Task> taskMap = new HashMap<>();
+    private final LinkedList<Task> historyOrder = new LinkedList<>();
 
     @Override
     public void add(Task task) {
-        history.remove(task); // Удаляем дубликаты
-        history.add(task);
-        if (history.size() > 10) {
-            history.remove(0); // Удаляем самый старый элемент
+        if (task == null) return;
+
+        taskMap.put(task.getId(), task);
+        historyOrder.remove(task);
+        historyOrder.addLast(task);
+
+        if (historyOrder.size() > 10) {
+            Task removed = historyOrder.removeFirst();
+            if (!historyOrder.contains(removed)) {
+                taskMap.remove(removed.getId());
+            }
         }
     }
 
     @Override
     public List<Task> getHistory() {
-        return new ArrayList<>(history); // Возвращаем копию
+        List<Task> result = new ArrayList<>();
+        for (Task task : historyOrder) {
+            Task latestVersion = taskMap.get(task.getId());
+            if (latestVersion != null) {
+                result.add(latestVersion);
+            }
+        }
+        return result;
     }
 }

@@ -14,7 +14,6 @@ public class InMemoryTaskManager implements TaskManager {
     private final Map<Integer, Epic> epics = new HashMap<>();
     private final HistoryManager historyManager = Managers.getDefaultHistory();
 
-    // Методы для Task
     @Override
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
@@ -52,7 +51,6 @@ public class InMemoryTaskManager implements TaskManager {
         tasks.remove(id);
     }
 
-    // Методы для Epic
     @Override
     public List<Epic> getAllEpics() {
         return new ArrayList<>(epics.values());
@@ -98,7 +96,6 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    // Методы для Subtask
     @Override
     public List<Subtask> getAllSubtasks() {
         return new ArrayList<>(subtasks.values());
@@ -124,6 +121,14 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void createSubtask(Subtask subtask) {
+        if (subtask.getId() == subtask.getEpicId()) {
+            throw new IllegalArgumentException("Подзадача не может быть своим же эпиком");
+        }
+
+        if (!epics.containsKey(subtask.getEpicId())) {
+            throw new IllegalArgumentException("Эпик с id=" + subtask.getEpicId() + " не существует");
+        }
+
         subtask.setId(nextId++);
         subtasks.put(subtask.getId(), subtask);
         Epic epic = epics.get(subtask.getEpicId());
@@ -153,7 +158,6 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    // Метод, который отсутствовал и вызывал ошибку
     @Override
     public List<Subtask> getSubtasksByEpicId(int epicId) {
         List<Subtask> result = new ArrayList<>();
@@ -176,7 +180,11 @@ public class InMemoryTaskManager implements TaskManager {
 
     private void updateEpicStatus(int epicId) {
         Epic epic = epics.get(epicId);
-        if (epic == null || epic.getSubtaskIds().isEmpty()) {
+        if (epic == null) {
+            return;
+        }
+
+        if (epic.getSubtaskIds().isEmpty()) {
             epic.setStatus(Status.NEW);
             return;
         }

@@ -15,7 +15,6 @@ public class Task {
         this.status = status;
     }
 
-    // Геттеры и сеттеры
     public int getId() {
         return id;
     }
@@ -65,9 +64,6 @@ public class Task {
     public String toString() {
         return "Task{" +
                 "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", status=" + status +
                 '}';
     }
 }

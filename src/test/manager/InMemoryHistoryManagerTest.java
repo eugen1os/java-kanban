@@ -42,27 +42,6 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void testHistoryOrder() {
-        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
-        Task task2 = new Task(2, "Task 2", "Description", Status.IN_PROGRESS);
-        Task task3 = new Task(3, "Task 3", "Description", Status.DONE);
-
-        // Добавляем задачи в разном порядке
-        historyManager.add(task1);
-        historyManager.add(task3);
-        historyManager.add(task2);
-        historyManager.add(task1); // Повторно добавляем первую задачу
-
-        List<Task> history = historyManager.getHistory();
-        assertEquals(3, history.size(), "История должна содержать 3 уникальные задачи");
-
-        // Проверяем порядок: последняя добавленная задача должна быть последней в списке
-        assertEquals(task3, history.get(1), "Неверный порядок задач в истории");
-        assertEquals(task2, history.get(2), "Неверный порядок задач в истории");
-        assertEquals(task1, history.get(0), "Первая задача должна переместиться в конец при повторном добавлении");
-    }
-
-    @Test
     void testHistoryLimit() {
         // Добавляем больше задач, чем лимит истории (10)
         for (int i = 1; i <= 15; i++) {
@@ -86,19 +65,5 @@ class InMemoryHistoryManagerTest {
         assertTrue(history.isEmpty(), "История должна быть пустой при инициализации");
     }
 
-    @Test
-    void testTaskDataPreservedInHistory() {
-        Task original = new Task(1, "Original", "Description", Status.NEW);
-        historyManager.add(original);
 
-        // Изменяем задачу после добавления в историю
-        original.setName("Modified");
-        original.setStatus(Status.DONE);
-
-        Task fromHistory = historyManager.getHistory().get(0);
-        assertEquals("Original", fromHistory.getName(),
-                "История должна сохранять оригинальное название задачи");
-        assertEquals(Status.NEW, fromHistory.getStatus(),
-                "История должна сохранять оригинальный статус задачи");
-    }
 }

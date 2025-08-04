@@ -1,10 +1,6 @@
 package manager;
 
-import model.Epic;
-import model.Status;
-import model.Subtask;
-import model.Task;
-
+import model.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
@@ -124,7 +120,6 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtask.getId() == subtask.getEpicId()) {
             throw new IllegalArgumentException("Подзадача не может быть своим же эпиком");
         }
-
         if (!epics.containsKey(subtask.getEpicId())) {
             throw new IllegalArgumentException("Эпик с id=" + subtask.getEpicId() + " не существует");
         }

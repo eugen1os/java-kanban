@@ -1,28 +1,34 @@
 package manager;
 
-import model.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
+    private final Map<Integer, model.Task> tasks = new HashMap<>();
+    private final Map<Integer, model.Epic> epics = new HashMap<>();
+    private final Map<Integer, model.Subtask> subtasks = new HashMap<>();
     private int nextId = 1;
-    private final Map<Integer, Task> tasks = new HashMap<>();
-    private final Map<Integer, Subtask> subtasks = new HashMap<>();
-    private final Map<Integer, Epic> epics = new HashMap<>();
     private final HistoryManager historyManager = Managers.getDefaultHistory();
 
+    // Реализация для Task
     @Override
-    public List<Task> getAllTasks() {
+    public List<model.Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
     }
 
     @Override
     public void deleteAllTasks() {
+        for (Integer id : tasks.keySet()) {
+            historyManager.remove(id);
+        }
         tasks.clear();
     }
 
     @Override
-    public Task getTaskById(int id) {
-        Task task = tasks.get(id);
+    public model.Task getTask(int id) {
+        model.Task task = tasks.get(id);
         if (task != null) {
             historyManager.add(task);
         }
@@ -30,37 +36,34 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void createTask(Task task) {
+    public model.Task createTask(model.Task task) {
         task.setId(nextId++);
         tasks.put(task.getId(), task);
+        return task;
     }
 
     @Override
-    public void updateTask(Task task) {
+    public void updateTask(model.Task task) {
         if (tasks.containsKey(task.getId())) {
             tasks.put(task.getId(), task);
         }
     }
 
     @Override
-    public void deleteTaskById(int id) {
+    public void deleteTask(int id) {
         tasks.remove(id);
+        historyManager.remove(id);
     }
 
+    // Реализация для Epic
     @Override
-    public List<Epic> getAllEpics() {
+    public List<model.Epic> getAllEpics() {
         return new ArrayList<>(epics.values());
     }
 
     @Override
-    public void deleteAllEpics() {
-        epics.clear();
-        subtasks.clear();
-    }
-
-    @Override
-    public Epic getEpicById(int id) {
-        Epic epic = epics.get(id);
+    public model.Epic getEpic(int id) {
+        model.Epic epic = epics.get(id);
         if (epic != null) {
             historyManager.add(epic);
         }
@@ -68,47 +71,43 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void createEpic(Epic epic) {
+    public model.Epic createEpic(model.Epic epic) {
         epic.setId(nextId++);
         epics.put(epic.getId(), epic);
+        return epic;
     }
 
     @Override
-    public void updateEpic(Epic epic) {
-        Epic savedEpic = epics.get(epic.getId());
-        if (savedEpic != null) {
-            savedEpic.setName(epic.getName());
-            savedEpic.setDescription(epic.getDescription());
+    public void updateEpic(model.Epic epic) {
+        if (epics.containsKey(epic.getId())) {
+            model.Epic existingEpic = epics.get(epic.getId());
+            existingEpic.setTitle(epic.getTitle());
+            existingEpic.setDescription(epic.getDescription());
         }
     }
 
     @Override
-    public void deleteEpicById(int id) {
-        Epic epic = epics.remove(id);
+    public void deleteEpic(int id) {
+        model.Epic epic = epics.remove(id);
         if (epic != null) {
-            for (int subtaskId : epic.getSubtaskIds()) {
+            historyManager.remove(id);
+            // Удаляем все подзадачи эпика
+            for (Integer subtaskId : epic.getSubtasksIds()) {
                 subtasks.remove(subtaskId);
+                historyManager.remove(subtaskId);
             }
         }
     }
 
+    // Реализация для Subtask
     @Override
-    public List<Subtask> getAllSubtasks() {
+    public List<model.Subtask> getAllSubtasks() {
         return new ArrayList<>(subtasks.values());
     }
 
     @Override
-    public void deleteAllSubtasks() {
-        subtasks.clear();
-        for (Epic epic : epics.values()) {
-            epic.getSubtaskIds().clear();
-            updateEpicStatus(epic.getId());
-        }
-    }
-
-    @Override
-    public Subtask getSubtaskById(int id) {
-        Subtask subtask = subtasks.get(id);
+    public model.Subtask getSubtask(int id) {
+        model.Subtask subtask = subtasks.get(id);
         if (subtask != null) {
             historyManager.add(subtask);
         }
@@ -116,25 +115,22 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void createSubtask(Subtask subtask) {
-        if (subtask.getId() == subtask.getEpicId()) {
-            throw new IllegalArgumentException("Подзадача не может быть своим же эпиком");
-        }
-        if (!epics.containsKey(subtask.getEpicId())) {
-            throw new IllegalArgumentException("Эпик с id=" + subtask.getEpicId() + " не существует");
-        }
-
+    public model.Subtask createSubtask(model.Subtask subtask) {
         subtask.setId(nextId++);
         subtasks.put(subtask.getId(), subtask);
-        Epic epic = epics.get(subtask.getEpicId());
+
+        // Добавляем подзадачу в эпик
+        model.Epic epic = epics.get(subtask.getEpicId());
         if (epic != null) {
             epic.addSubtaskId(subtask.getId());
             updateEpicStatus(epic.getId());
         }
+
+        return subtask;
     }
 
     @Override
-    public void updateSubtask(Subtask subtask) {
+    public void updateSubtask(model.Subtask subtask) {
         if (subtasks.containsKey(subtask.getId())) {
             subtasks.put(subtask.getId(), subtask);
             updateEpicStatus(subtask.getEpicId());
@@ -142,10 +138,12 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void deleteSubtaskById(int id) {
-        Subtask subtask = subtasks.remove(id);
+    public void deleteSubtask(int id) {
+        model.Subtask subtask = subtasks.remove(id);
         if (subtask != null) {
-            Epic epic = epics.get(subtask.getEpicId());
+            historyManager.remove(id);
+            // Удаляем подзадачу из эпика
+            model.Epic epic = epics.get(subtask.getEpicId());
             if (epic != null) {
                 epic.removeSubtaskId(id);
                 updateEpicStatus(epic.getId());
@@ -154,12 +152,12 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<Subtask> getSubtasksByEpicId(int epicId) {
-        List<Subtask> result = new ArrayList<>();
-        Epic epic = epics.get(epicId);
+    public List<model.Subtask> getSubtasksByEpic(int epicId) {
+        List<model.Subtask> result = new ArrayList<>();
+        model.Epic epic = epics.get(epicId);
         if (epic != null) {
-            for (int subtaskId : epic.getSubtaskIds()) {
-                Subtask subtask = subtasks.get(subtaskId);
+            for (Integer subtaskId : epic.getSubtasksIds()) {
+                model.Subtask subtask = subtasks.get(subtaskId);
                 if (subtask != null) {
                     result.add(subtask);
                 }
@@ -168,45 +166,44 @@ public class InMemoryTaskManager implements TaskManager {
         return result;
     }
 
+    // История просмотров
     @Override
-    public List<Task> getHistory() {
+    public List<model.Task> getHistory() {
         return historyManager.getHistory();
     }
 
+    // Вспомогательные методы
     private void updateEpicStatus(int epicId) {
-        Epic epic = epics.get(epicId);
-        if (epic == null) {
+        model.Epic epic = epics.get(epicId);
+        if (epic == null) return;
+
+        List<Integer> subtaskIds = epic.getSubtasksIds();
+        if (subtaskIds.isEmpty()) {
+            epic.setStatus(model.Status.NEW);
             return;
         }
 
-        if (epic.getSubtaskIds().isEmpty()) {
-            epic.setStatus(Status.NEW);
-            return;
-        }
-
-        boolean allNew = true;
         boolean allDone = true;
+        boolean allNew = true;
 
-        for (int subtaskId : epic.getSubtaskIds()) {
-            Subtask subtask = subtasks.get(subtaskId);
-            if (subtask == null) {
-                continue;
-            }
-
-            if (subtask.getStatus() != Status.NEW) {
-                allNew = false;
-            }
-            if (subtask.getStatus() != Status.DONE) {
-                allDone = false;
+        for (Integer subtaskId : subtaskIds) {
+            model.Subtask subtask = subtasks.get(subtaskId);
+            if (subtask != null) {
+                if (subtask.getStatus() != model.Status.DONE) {
+                    allDone = false;
+                }
+                if (subtask.getStatus() != model.Status.NEW) {
+                    allNew = false;
+                }
             }
         }
 
         if (allDone) {
-            epic.setStatus(Status.DONE);
+            epic.setStatus(model.Status.DONE);
         } else if (allNew) {
-            epic.setStatus(Status.NEW);
+            epic.setStatus(model.Status.NEW);
         } else {
-            epic.setStatus(Status.IN_PROGRESS);
+            epic.setStatus(model.Status.IN_PROGRESS);
         }
     }
 }

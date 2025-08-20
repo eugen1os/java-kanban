@@ -2,45 +2,46 @@ package model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class Epic extends Task {
-    private List<Integer> subtaskIds = new ArrayList<>();
+    private List<Integer> subtasksIds;
 
-    public Epic(int id, String name, String description) {
-        super(id, name, description, Status.NEW);
+    public Epic(int id, String title, String description, Status status) {
+        super(id, title, description, status);
+        this.subtasksIds = new ArrayList<>();
     }
 
-    public List<Integer> getSubtaskIds() {
-        return subtaskIds;
+    public Epic(String title, String description, Status status) {
+        super(title, description, status);
+        this.subtasksIds = new ArrayList<>();
     }
 
-    public void addSubtaskId(int id) {
-        subtaskIds.add(id);
+    public List<Integer> getSubtasksIds() {
+        return new ArrayList<>(subtasksIds);
     }
 
-    public void removeSubtaskId(int id) {
-        subtaskIds.remove((Integer) id);
+    public void addSubtaskId(int subtaskId) {
+        if (!subtasksIds.contains(subtaskId)) {
+            subtasksIds.add(subtaskId);
+        }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        Epic epic = (Epic) o;
-        return id == epic.id;
+    public void removeSubtaskId(int subtaskId) {
+        subtasksIds.remove(Integer.valueOf(subtaskId));
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public void clearSubtasks() {
+        subtasksIds.clear();
     }
 
     @Override
     public String toString() {
         return "Epic{" +
-                "id=" + id +
+                "id=" + getId() +
+                ", title='" + getTitle() + '\'' +
+                ", description='" + getDescription() + '\'' +
+                ", status=" + getStatus() +
+                ", subtasksIds=" + subtasksIds +
                 '}';
     }
 }

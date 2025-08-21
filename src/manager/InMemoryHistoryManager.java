@@ -1,30 +1,20 @@
 package manager;
 
+import model.Task;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private static class Node {
-        model.Task data;
-        Node next;
-        Node prev;
-
-        Node(Node prev, model.Task data, Node next) {
-            this.data = data;
-            this.next = next;
-            this.prev = prev;
-        }
-    }
-
     private final Map<Integer, Node> nodeMap = new HashMap<>();
     private Node first;
     private Node last;
     private int size = 0;
 
     @Override
-    public void add(model.Task task) {
+    public void add(Task task) {
         if (task == null) {
             return;
         }
@@ -51,11 +41,11 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     @Override
-    public List<model.Task> getHistory() {
+    public List<Task> getHistory() {
         return getTasks();
     }
 
-    private void linkLast(model.Task task) {
+    private void linkLast(Task task) {
         final Node l = last;
         final Node newNode = new Node(l, task, null);
         last = newNode;
@@ -63,19 +53,19 @@ public class InMemoryHistoryManager implements HistoryManager {
         if (l == null) {
             first = newNode;
         } else {
-            l.next = newNode;
+            l.setNext(newNode);
         }
 
         size++;
     }
 
-    private List<model.Task> getTasks() {
-        List<model.Task> tasks = new ArrayList<>();
+    private List<Task> getTasks() {
+        List<Task> tasks = new ArrayList<>();
         Node current = first;
 
         while (current != null) {
-            tasks.add(current.data);
-            current = current.next;
+            tasks.add(current.getData());
+            current = current.getNext();
         }
 
         return tasks;
@@ -86,24 +76,24 @@ public class InMemoryHistoryManager implements HistoryManager {
             return;
         }
 
-        final Node next = node.next;
-        final Node prev = node.prev;
+        final Node next = node.getNext();
+        final Node prev = node.getPrev();
 
         if (prev == null) {
             first = next;
         } else {
-            prev.next = next;
-            node.prev = null;
+            prev.setNext(next);
+            node.setPrev(null);
         }
 
         if (next == null) {
             last = prev;
         } else {
-            next.prev = prev;
-            node.next = null;
+            next.setPrev(prev);
+            node.setNext(null);
         }
 
-        node.data = null;
+        node.setData(null);
         size--;
     }
 

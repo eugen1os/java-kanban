@@ -35,6 +35,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
             boolean readingHistory = false;
             List<Integer> historyIds = new ArrayList<>();
+            int maxId = 0;
 
             for (int i = 1; i < lines.length; i++) {
                 String line = lines[i].trim();
@@ -46,19 +47,29 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 if (!readingHistory) {
                     Task task = fromString(line);
                     if (task != null) {
-                        addTaskWithoutSaving(task);
+                        // Проверяем на дубликаты
+                        if (!hasTaskWithId(task.getId())) {
+                            addTaskWithoutSaving(task);
+                            maxId = Math.max(maxId, task.getId());
+                        }
                     }
                 } else {
                     String[] historyParts = line.split(",");
                     for (String idStr : historyParts) {
                         try {
-                            historyIds.add(Integer.parseInt(idStr.trim()));
+                            int id = Integer.parseInt(idStr.trim());
+                            historyIds.add(id);
                         } catch (NumberFormatException e) {
+                            // Пропускаем некорректные ID
                         }
                     }
                 }
             }
 
+            // Устанавливаем корректный nextId
+            nextId = maxId + 1;
+
+            // Восстанавливаем историю
             for (int id : historyIds) {
                 Task task = findTaskById(id);
                 if (task != null) {
@@ -69,6 +80,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка при загрузке из файла", e);
         }
+    }
+
+    private boolean hasTaskWithId(int id) {
+        return tasks.containsKey(id) || epics.containsKey(id) || subtasks.containsKey(id);
     }
 
     private Task findTaskById(int id) {
@@ -86,7 +101,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         if (task instanceof Epic) {
             Epic epic = (Epic) task;
             epics.put(epic.getId(), epic);
-            updateNextId(epic.getId());
         } else if (task instanceof Subtask) {
             Subtask subtask = (Subtask) task;
             subtasks.put(subtask.getId(), subtask);
@@ -94,16 +108,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             if (epic != null) {
                 epic.addSubtaskId(subtask.getId());
             }
-            updateNextId(subtask.getId());
         } else {
             tasks.put(task.getId(), task);
-            updateNextId(task.getId());
-        }
-    }
-
-    private void updateNextId(int id) {
-        if (id >= nextId) {
-            nextId = id + 1;
         }
     }
 
@@ -118,7 +124,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             TaskType type = TaskType.valueOf(fields[1]);
             String name = fields[2];
             Status status = Status.valueOf(fields[3]);
-            String description = fields[4];
+            String description = fields[4].isEmpty() ? "" : fields[4];
 
             switch (type) {
                 case TASK:
@@ -271,24 +277,19 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         save();
     }
 
+    // Убраны save() из методов получения задач чтобы избежать бесконечной рекурсии
     @Override
     public Task getTaskById(int id) {
-        Task task = super.getTaskById(id);
-        save();
-        return task;
+        return super.getTaskById(id);
     }
 
     @Override
     public Epic getEpicById(int id) {
-        Epic epic = super.getEpicById(id);
-        save();
-        return epic;
+        return super.getEpicById(id);
     }
 
     @Override
     public Subtask getSubtaskById(int id) {
-        Subtask subtask = super.getSubtaskById(id);
-        save();
-        return subtask;
+        return super.getSubtaskById(id);
     }
 }

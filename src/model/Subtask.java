@@ -34,8 +34,6 @@ public class Subtask extends Task {
 
     @Override
     public String toString() {
-        return "Subtask{" +
-                "id=" + id +
-                '}';
+        return "Subtask{" + "id=" + id + '}';
     }
 }

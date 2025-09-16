@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Epic extends Task {
-    private List<Integer> subtaskIds = new ArrayList<>();
+    private final List<Integer> subtaskIds = new ArrayList<>();
 
     public Epic(int id, String name, String description) {
         super(id, name, description, Status.NEW);
@@ -39,8 +39,6 @@ public class Epic extends Task {
 
     @Override
     public String toString() {
-        return "Epic{" +
-                "id=" + id +
-                '}';
+        return "Epic{" + "id=" + id + '}';
     }
 }

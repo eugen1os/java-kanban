@@ -1,8 +1,14 @@
 package manager;
 
-import model.*;
+import model.Epic;
+import model.Status;
+import model.Subtask;
+import model.Task;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Task> tasks = new HashMap<>();

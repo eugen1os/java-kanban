@@ -59,6 +59,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                             int id = Integer.parseInt(idStr.trim());
                             historyIds.add(id);
                         } catch (NumberFormatException e) {
+                            throw new ManagerSaveException("Ошибка сохранения в файл", e);
                         }
                     }
                 }

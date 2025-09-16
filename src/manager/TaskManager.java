@@ -1,30 +1,36 @@
 package manager;
 
+import model.Task;
 import model.Epic;
 import model.Subtask;
-import model.Task;
-
 import java.util.List;
 
 public interface TaskManager {
+    // Методы для Task
     List<Task> getAllTasks();
     void deleteAllTasks();
-    Task getTask(int id);
-    Task createTask(Task task);
+    Task getTaskById(int id);
+    void createTask(Task task);
     void updateTask(Task task);
-    void deleteTask(int id);
+    void deleteTaskById(int id);
 
+    // Методы для Epic
     List<Epic> getAllEpics();
-    List<Subtask> getAllSubtasks();
-    Epic getEpic(int id);
-    Subtask getSubtask(int id);
-    Epic createEpic(Epic epic);
-    Subtask createSubtask(Subtask subtask);
+    void deleteAllEpics();
+    Epic getEpicById(int id);
+    void createEpic(Epic epic);
     void updateEpic(Epic epic);
-    void updateSubtask(Subtask subtask);
-    void deleteEpic(int id);
-    void deleteSubtask(int id);
-    List<Subtask> getSubtasksByEpic(int epicId);
+    void deleteEpicById(int id);
 
+    // Методы для Subtask
+    List<Subtask> getAllSubtasks();
+    void deleteAllSubtasks();
+    Subtask getSubtaskById(int id);
+    void createSubtask(Subtask subtask);
+    void updateSubtask(Subtask subtask);
+    void deleteSubtaskById(int id);
+
+    // Дополнительные методы
+    List<Subtask> getSubtasksByEpicId(int epicId);
     List<Task> getHistory();
 }

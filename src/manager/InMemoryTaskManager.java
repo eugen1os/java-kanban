@@ -1,14 +1,15 @@
 package manager;
 
 import model.*;
+
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    protected int nextId = 1;
     protected final Map<Integer, Task> tasks = new HashMap<>();
     protected final Map<Integer, Subtask> subtasks = new HashMap<>();
     protected final Map<Integer, Epic> epics = new HashMap<>();
     protected final HistoryManager historyManager = Managers.getDefaultHistory();
+    protected int nextId = 1;
 
     @Override
     public List<Task> getAllTasks() {

@@ -60,7 +60,7 @@ public class Main {
     }
 
     private static void printMainMenu() {
-        System.out.println("\nГлавное меню:");
+        System.out.println("\nГлавное мену:");
         System.out.println("1. Управление задачами");
         System.out.println("2. Управление эпиками");
         System.out.println("3. Управление подзадачами");
@@ -118,6 +118,10 @@ public class Main {
                     System.out.println("Задача не найдена!");
                 }
             }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
         }
     }
 
@@ -163,6 +167,10 @@ public class Main {
                     System.out.println(subtask);
                 }
             }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
         }
     }
 
@@ -218,6 +226,10 @@ public class Main {
                     System.out.println("Подзадача не найдена!");
                 }
             }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
         }
     }
 

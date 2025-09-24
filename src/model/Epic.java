@@ -2,46 +2,43 @@ package model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Epic extends Task {
-    private List<Integer> subtasksIds;
+    private final List<Integer> subtaskIds = new ArrayList<>();
 
-    public Epic(int id, String title, String description, Status status) {
-        super(id, title, description, status);
-        this.subtasksIds = new ArrayList<>();
+    public Epic(int id, String name, String description) {
+        super(id, name, description, Status.NEW);
     }
 
-    public Epic(String title, String description, Status status) {
-        super(title, description, status);
-        this.subtasksIds = new ArrayList<>();
+    public List<Integer> getSubtaskIds() {
+        return subtaskIds;
     }
 
-    public List<Integer> getSubtasksIds() {
-        return new ArrayList<>(subtasksIds);
+    public void addSubtaskId(int id) {
+        subtaskIds.add(id);
     }
 
-    public void addSubtaskId(int subtaskId) {
-        if (!subtasksIds.contains(subtaskId)) {
-            subtasksIds.add(subtaskId);
-        }
+    public void removeSubtaskId(int id) {
+        subtaskIds.remove((Integer) id);
     }
 
-    public void removeSubtaskId(int subtaskId) {
-        subtasksIds.remove(Integer.valueOf(subtaskId));
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Epic epic = (Epic) o;
+        return id == epic.id;
     }
 
-    public void clearSubtasks() {
-        subtasksIds.clear();
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override
     public String toString() {
-        return "Epic{" +
-                "id=" + getId() +
-                ", title='" + getTitle() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", status=" + getStatus() +
-                ", subtasksIds=" + subtasksIds +
-                '}';
+        return "Epic{" + "id=" + id + '}';
     }
 }

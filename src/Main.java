@@ -5,116 +5,258 @@ import model.Status;
 import model.Subtask;
 import model.Task;
 
-import java.util.List;
+import java.util.Scanner;
 
 public class Main {
-
     public static void main(String[] args) {
-        TaskManager manager = Managers.getDefault();
-
         System.out.println("Поехали!");
+        TaskManager manager = Managers.getDefault();
+        Scanner scanner = new Scanner(System.in);
 
-        // Создаем две задачи
-        Task task1 = new Task("Тестовая задача 1", "Описание тестовой задачи 1", Status.NEW);
-        Task task2 = new Task("Тестовая задача 2", "Описание тестовой задачи 2", Status.IN_PROGRESS);
-        Task createdTask1 = manager.createTask(task1);
-        Task createdTask2 = manager.createTask(task2);
+        boolean isRunning = true;
+        while (isRunning) {
+            printMainMenu();
+            int command = readInt(scanner, "Введите команду: ");
+            scanner.nextLine(); // Очистка буфера
 
-        // Создаем эпик с двумя подзадачами
-        Epic epic1 = new Epic("Тестовый эпик 1", "Описание тестового эпика 1", Status.NEW);
-        Epic createdEpic1 = manager.createEpic(epic1);
+            switch (command) {
+                case 1 -> menuTasks(manager, scanner);
+                case 2 -> menuEpics(manager, scanner);
+                case 3 -> menuSubtasks(manager, scanner);
+                case 4 -> printAllData(manager);
+                case 5 -> printHistory(manager);
+                case 0 -> isRunning = false;
+                default -> System.out.println("Ошибка: неверная команда!");
+            }
+        }
+    }
 
-        Subtask subtask1 = new Subtask("Тестовая подзадача 1", "Описание тестовой подзадачи 1", Status.NEW, createdEpic1.getId());
-        Subtask subtask2 = new Subtask("Тестовая подзадача 2", "Описание тестовой подзадачи 2", Status.DONE, createdEpic1.getId());
-        Subtask createdSubtask1 = manager.createSubtask(subtask1);
-        Subtask createdSubtask2 = manager.createSubtask(subtask2);
+    private static void printStatusMenu() {
+        System.out.println("Выберите статус:");
+        System.out.println("1. NEW");
+        System.out.println("2. IN_PROGRESS");
+        System.out.println("3. DONE");
+    }
 
-        // Создаем эпик без подзадач
-        Epic epic2 = new Epic("Тестовый эпик 2", "Описание тестового эпика 2", Status.NEW);
-        Epic createdEpic2 = manager.createEpic(epic2);
+    private static Status selectStatus(Scanner scanner) {
+        printStatusMenu();
+        int statusChoice = readInt(scanner, "Введите номер статуса: ");
+        return switch (statusChoice) {
+            case 1 -> Status.NEW;
+            case 2 -> Status.IN_PROGRESS;
+            case 3 -> Status.DONE;
+            default -> {
+                System.out.println("Неверный выбор, установлен статус NEW");
+                yield Status.NEW;
+            }
+        };
+    }
 
-        // Печатаем списки задач, эпиков и подзадач
-        System.out.println("\nВсе задачи:");
-        for (Task task : manager.getAllTasks()) {
+    private static void printHistory(TaskManager manager) {
+        System.out.println("\n=== История просмотров ===");
+        for (Task task : manager.getHistory()) {
             System.out.println(task);
         }
+    }
 
-        System.out.println("\nВсе эпики:");
-        for (Epic epic : manager.getAllEpics()) {
-            System.out.println(epic);
+    private static void printMainMenu() {
+        System.out.println("\nГлавное мену:");
+        System.out.println("1. Управление задачами");
+        System.out.println("2. Управление эпиками");
+        System.out.println("3. Управление подзадачами");
+        System.out.println("4. Показать все данные");
+        System.out.println("5. История просмотров");
+        System.out.println("0. Выход");
+    }
+
+    private static void menuTasks(TaskManager manager, Scanner scanner) {
+        System.out.println("\n=== Управление задачами ===");
+        System.out.println("1. Создать задачу");
+        System.out.println("2. Удалить задачу");
+        System.out.println("3. Показать все задачи");
+        System.out.println("4. Изменить статус задачи");
+        System.out.println("5. Назад");
+        System.out.print("Введите команду: ");
+
+        int command = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (command) {
+            case 1 -> {
+                System.out.print("Введите название задачи: ");
+                String name = scanner.nextLine();
+                System.out.print("Введите описание: ");
+                String desc = scanner.nextLine();
+                Task task = new Task(0, name, desc, Status.NEW);
+                manager.createTask(task);
+                System.out.println("Задача создана! ID: " + task.getId());
+            }
+            case 2 -> {
+                System.out.print("Введите ID задачи для удаления: ");
+                int id = scanner.nextInt();
+                manager.deleteTaskById(id);
+                System.out.println("Задача удалена.");
+            }
+            case 3 -> {
+                System.out.println("Все задачи:");
+                for (Task task : manager.getAllTasks()) {
+                    System.out.println(task);
+                }
+            }
+            case 4 -> {
+                System.out.print("Введите ID задачи: ");
+                int id = scanner.nextInt();
+                scanner.nextLine();
+
+                Status status = selectStatus(scanner);
+                Task task = manager.getTaskById(id);
+                if (task != null) {
+                    task.setStatus(status);
+                    manager.updateTask(task);
+                    System.out.println("Статус обновлён!");
+                } else {
+                    System.out.println("Задача не найдена!");
+                }
+            }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
         }
+    }
 
-        System.out.println("\nВсе подзадачи:");
-        for (Subtask subtask : manager.getAllSubtasks()) {
-            System.out.println(subtask);
+    private static void menuEpics(TaskManager manager, Scanner scanner) {
+        System.out.println("\n=== Управление эпиками ===");
+        System.out.println("1. Создать эпик");
+        System.out.println("2. Удалить эпик");
+        System.out.println("3. Показать все эпики");
+        System.out.println("4. Показать подзадачи эпика");
+        System.out.println("5. Назад");
+        System.out.print("Введите команду: ");
+
+        int command = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (command) {
+            case 1 -> {
+                System.out.print("Введите название эпика: ");
+                String name = scanner.nextLine();
+                System.out.print("Введите описание: ");
+                String desc = scanner.nextLine();
+                Epic epic = new Epic(0, name, desc);
+                manager.createEpic(epic);
+                System.out.println("Эпик создан! ID: " + epic.getId());
+            }
+            case 2 -> {
+                System.out.print("Введите ID эпика для удаления: ");
+                int id = scanner.nextInt();
+                manager.deleteEpicById(id);
+                System.out.println("Эпик удалён.");
+            }
+            case 3 -> {
+                System.out.println("Все эпики:");
+                for (Epic epic : manager.getAllEpics()) {
+                    System.out.println(epic);
+                }
+            }
+            case 4 -> {
+                System.out.print("Введите ID эпика: ");
+                int epicId = scanner.nextInt();
+                System.out.println("Подзадачи эпика " + epicId + ":");
+                for (Subtask subtask : manager.getSubtasksByEpicId(epicId)) {
+                    System.out.println(subtask);
+                }
+            }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
         }
+    }
 
-        // Изменяем статусы созданных объектов
-        Task updatedTask2 = new Task(createdTask2.getId(), "Обновленная задача 2", "Новое описание", Status.DONE);
-        manager.updateTask(updatedTask2);
+    private static void menuSubtasks(TaskManager manager, Scanner scanner) {
+        System.out.println("\n=== Управление подзадачами ===");
+        System.out.println("1. Создать подзадачу");
+        System.out.println("2. Удалить подзадачу");
+        System.out.println("3. Показать все подзадачи");
+        System.out.println("4. Изменить статус подзадачи");
+        System.out.println("5. Назад");
+        System.out.print("Введите команду: ");
 
-        Subtask updatedSubtask1 = new Subtask(createdSubtask1.getId(), "Обновленная подзадача 1", "Новое описание", Status.IN_PROGRESS, createdEpic1.getId());
-        manager.updateSubtask(updatedSubtask1);
+        int command = scanner.nextInt();
+        scanner.nextLine();
 
-        // Печатаем обновленные списки
-        System.out.println("\nПосле обновления:");
+        switch (command) {
+            case 1 -> {
+                System.out.print("Введите ID эпика для подзадачи: ");
+                int epicId = scanner.nextInt();
+                scanner.nextLine();
+                System.out.print("Введите название подзадачи: ");
+                String name = scanner.nextLine();
+                System.out.print("Введите описание: ");
+                String desc = scanner.nextLine();
+                Subtask subtask = new Subtask(0, name, desc, Status.NEW, epicId);
+                manager.createSubtask(subtask);
+                System.out.println("Подзадача создана! ID: " + subtask.getId());
+            }
+            case 2 -> {
+                System.out.print("Введите ID подзадачи для удаления: ");
+                int id = scanner.nextInt();
+                manager.deleteSubtaskById(id);
+                System.out.println("Подзадача удалена.");
+            }
+            case 3 -> {
+                System.out.println("Все подзадачи:");
+                for (Subtask subtask : manager.getAllSubtasks()) {
+                    System.out.println(subtask);
+                }
+            }
+            case 4 -> {
+                System.out.print("Введите ID подзадачи: ");
+                int id = scanner.nextInt();
+                scanner.nextLine();
+
+                Status status = selectStatus(scanner);
+                Subtask subtask = manager.getSubtaskById(id);
+                if (subtask != null) {
+                    subtask.setStatus(status);
+                    manager.updateSubtask(subtask);
+                    System.out.println("Статус обновлён!");
+                } else {
+                    System.out.println("Подзадача не найдена!");
+                }
+            }
+            case 5 -> {
+                // Возврат в главное меню
+            }
+            default -> System.out.println("Ошибка: неверная команда!"); // ДОБАВЛЕНО default case
+        }
+    }
+
+    private static void printAllData(TaskManager manager) {
+        System.out.println("\n=== Все данные ===");
         System.out.println("Задачи:");
         for (Task task : manager.getAllTasks()) {
             System.out.println(task);
         }
 
-        System.out.println("Подзадачи:");
-        for (Subtask subtask : manager.getAllSubtasks()) {
-            System.out.println(subtask);
-        }
-
-        System.out.println("Эпики:");
+        System.out.println("\nЭпики:");
         for (Epic epic : manager.getAllEpics()) {
             System.out.println(epic);
         }
 
-        // Имитируем просмотр задач для истории
-        System.out.println("\nИмитация просмотра задач:");
-        manager.getTask(createdTask1.getId());
-        manager.getEpic(createdEpic1.getId());
-        manager.getSubtask(createdSubtask1.getId());
-        manager.getTask(createdTask2.getId());
-        manager.getEpic(createdEpic2.getId());
-
-        // Печатаем историю просмотров
-        System.out.println("\nИстория просмотров:");
-        List<Task> history = manager.getHistory();
-        for (Task task : history) {
-            System.out.println(task);
-        }
-
-        // Удаляем одну задачу и проверяем историю
-        System.out.println("\nПосле удаления задачи " + createdTask1.getId() + ":");
-        manager.deleteTask(createdTask1.getId());
-
-        history = manager.getHistory();
-        for (Task task : history) {
-            System.out.println(task);
-        }
-
-        // Удаляем эпик и проверяем, что удалились подзадачи
-        System.out.println("\nПосле удаления эпика " + createdEpic1.getId() + ":");
-        manager.deleteEpic(createdEpic1.getId());
-
-        System.out.println("Эпики:");
-        for (Epic epic : manager.getAllEpics()) {
-            System.out.println(epic);
-        }
-
-        System.out.println("Подзадачи:");
+        System.out.println("\nПодзадачи:");
         for (Subtask subtask : manager.getAllSubtasks()) {
             System.out.println(subtask);
         }
+    }
 
-        System.out.println("История просмотров:");
-        history = manager.getHistory();
-        for (Task task : history) {
-            System.out.println(task);
+    private static int readInt(Scanner scanner, String prompt) {
+        System.out.print(prompt);
+        while (!scanner.hasNextInt()) {
+            System.out.println("Ошибка: введите число!");
+            scanner.next();
         }
+        return scanner.nextInt();
     }
 }
